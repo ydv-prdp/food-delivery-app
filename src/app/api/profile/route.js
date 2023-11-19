@@ -8,12 +8,16 @@ export async function PUT(req){
     mongoose.connect(process.env.MONGO_URL);
     const session = await getServerSession(authOptions);
     const email = session.user.email;
-    if('name' in data){
-        const user = await User.findOne({email});
-        if(user){
-            user.name = data.name;
-            await user.save();
-        }
+
+    const update = {};
+    if('name in data'){
+        update.name = data.name;
+    }
+    if('image' in data){
+        update.image = data.image;
+    }
+    if(Object.keys(update).length > 0){
+        const user = await User.updateOne({email}, update);
     }
     return Response.json(true);
 }
