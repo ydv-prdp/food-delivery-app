@@ -1,35 +1,67 @@
 'use client'
+import InfoBox from "@/components/layout/InfoBox";
+import SuccessBox from "@/components/layout/SuccessBox";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { redirect, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+
 
 export default function ProfilePage(){
     const session = useSession();
     const {status} = session;
     const [image, setImage] = useState('');
     const [userName, setUserName] = useState('');
-    const [saved, setSaved]  = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
+    const [phone, setPhone] = useState('');
+    const [streetAddress, setStreetAddress] = useState('');
+    const [postalCode, setPostalCode] = useState('');
+    const [city, setCity] = useState('');
+    const [country, setCountry] = useState('');
+
     useEffect(()=>{
         if(status === 'authenticated'){
             setUserName(session?.data?.user?.name);
             setImage(session.data?.user?.image);
+            fetch('/api/profile').then(response => {
+                response.json().then(data => {
+                   setPhone(data.phone);
+                   setStreetAddress(data.streetAddress);
+                   setPostalCode(data.postalCode);
+                   setCity(data.city);
+                   setCountry(data.country);
+                })
+            })
         }
     },[session, status])
     async function handleProfileInfoUpdate(ev){
         ev.preventDefault();
-        setSaved(false);
-        setIsSaving(true);
-        const response = await fetch('/api/profile', {
-            method:'PUT',
-            headers:{'Content-Type': 'application/json'},
-            body: JSON.stringify({name:userName, image})
+        const savingProfile = new Promise(async (resolve, reject) => {
+            const response = await fetch('/api/profile', {
+                method:'PUT',
+                headers:{'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    name:userName, 
+                    image,
+                    phone,
+                    streetAddress,
+                    postalCode,
+                    city,
+                    country
+                })
+            })
+            if(response.ok){
+                resolve();
+            }
+            else
+                reject();
         })
-        setIsSaving(false);
-        if(response.ok){
-            setSaved(true);
-        }
+        await toast.promise(savingProfile, {
+            loading: 'Saving...',
+            success: 'Profile saved!',
+            error:'Error',
+        })
+      
     }
     if(status === 'loading'){
         return 'Loading...'
@@ -43,12 +75,27 @@ export default function ProfilePage(){
             const data = new FormData;
             data.set('file', files[0]);
             data.set('upload_preset', "dfvptgec")
-            const imgResp = await fetch('https://api.cloudinary.com/v1_1/dmbmqhtlb/image/upload',{
-                method:'POST',
-                body:data
+            const uploadPromise = new Promise(async(resolve, reject)=>{
+                const imgResp = await fetch('https://api.cloudinary.com/v1_1/dmbmqhtlb/image/upload',{
+                    method:'POST',
+                    body:data
+                })
+                if(imgResp.ok)
+                {
+                    const imageData = await imgResp.text();
+                    setImage(JSON.parse(imageData).url)
+                    resolve();
+                }
+                else{
+                    reject();
+                }
             })
-            const imageData = await imgResp.text();
-            setImage(JSON.parse(imageData).url)
+
+            await toast.promise(uploadPromise, {
+                loading: 'Uploading...',
+                success: 'Upload complete',
+                error:'Upload error',
+            })  
         }
     }
     return(
@@ -57,16 +104,6 @@ export default function ProfilePage(){
                 Profile
             </h1>
             <div className="max-w-md mx-auto">
-                {saved && (
-                    <h2 className="text-center bg-green-100 p-4 rounded-lg border border-green-300">
-                        Profile saved!
-                    </h2>
-                )}
-                {isSaving && (
-                    <h2 className="text-center bg-blue-100 p-4 rounded-lg border border-blue-300">
-                        Saving...
-                    </h2>
-                )}
                <div className="flex gap-4 items-center">
                    <div>
                         <div className="p-2 rounded-lg relative max-w-[120px]">
@@ -78,10 +115,51 @@ export default function ProfilePage(){
                         </div>
                    </div>
                     <form className="grow" onSubmit={handleProfileInfoUpdate}>
+                        <label>
+                            First and Last Name
+                        </label>
                         <input type="text" placeholder="First and Last Name"
                             value={userName} onChange={ev => setUserName(ev.target.value)}
                         />
+                         <label>
+                            Email
+                        </label>
                         <input type="email" disabled={true} value={session.data?.user?.email}/>
+                        <label>
+                            Phone
+                        </label>
+                        <input type="tel" placeholder="Phone number" 
+                            value={phone} 
+                            onChange={ev => setPhone(ev.target.value)}
+                        />
+                         <label>
+                            Street Address
+                        </label>
+                        <input type="text" placeholder="Street address"
+                            value={streetAddress} 
+                            onChange={ev => setStreetAddress(ev.target.value)}
+                        />
+                         <label>
+                            City
+                        </label>
+                        <input type="text" placeholder="City"
+                            value={city} 
+                            onChange={ev => setCity(ev.target.value)}
+                        />
+                         <label>
+                            Postal Code
+                        </label>
+                        <input type="text" placeholder="Postal code"
+                            value={postalCode} 
+                            onChange={ev => setPostalCode(ev.target.value)}
+                        />
+                         <label>
+                            Country
+                        </label>
+                        <input type="text" placeholder="Country"
+                            value={country} 
+                            onChange={ev => setCountry(ev.target.value)}
+                        />
                         <button type="submit">
                             Save
                         </button>
