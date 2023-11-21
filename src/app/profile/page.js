@@ -1,4 +1,5 @@
 'use client'
+import AdminTabs from "@/components/layout/AdminTabs";
 import InfoBox from "@/components/layout/InfoBox";
 import SuccessBox from "@/components/layout/SuccessBox";
 import { useSession } from "next-auth/react";
@@ -18,6 +19,8 @@ export default function ProfilePage(){
     const [postalCode, setPostalCode] = useState('');
     const [city, setCity] = useState('');
     const [country, setCountry] = useState('');
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [profileFetched, setProfileFetched] = useState(false);
 
     useEffect(()=>{
         if(status === 'authenticated'){
@@ -25,11 +28,14 @@ export default function ProfilePage(){
             setImage(session.data?.user?.image);
             fetch('/api/profile').then(response => {
                 response.json().then(data => {
-                   setPhone(data.phone);
-                   setStreetAddress(data.streetAddress);
-                   setPostalCode(data.postalCode);
-                   setCity(data.city);
-                   setCountry(data.country);
+                   setPhone(data._doc.phone);
+                   setStreetAddress(data._doc.streetAddress);
+                   setPostalCode(data._doc.postalCode);
+                   setCity(data._doc.city);
+                   setCountry(data._doc.country);
+                   setIsAdmin(data._doc.admin);
+                   setProfileFetched(true);
+                   console.log(data._doc.phone)
                 })
             })
         }
@@ -63,7 +69,7 @@ export default function ProfilePage(){
         })
       
     }
-    if(status === 'loading'){
+    if(status === 'loading' || !profileFetched){
         return 'Loading...'
     }
     if(status === 'unauthenticated'){
@@ -100,11 +106,9 @@ export default function ProfilePage(){
     }
     return(
         <section className="mt-8">
-            <h1 className="text-center text-primary text-4xl mb-4">
-                Profile
-            </h1>
+           <AdminTabs isAdmin={isAdmin}/>
             <div className="max-w-md mx-auto">
-               <div className="flex gap-4 items-center">
+               <div className="flex gap-4 items-center mt-8">
                    <div>
                         <div className="p-2 rounded-lg relative max-w-[120px]">
                             <Image src={image} className="rounded-lg w-full h-full mb-4" width={250} height={250} alt="avatar"/>
