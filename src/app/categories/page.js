@@ -57,6 +57,27 @@ const Categories = () => {
             error:editedCategory ? 'Error updating category' : 'Error Creating New Category'
         })
     }
+    async function handleDelete(_id){
+        const promise = new Promise(async (resolve, reject)=>{
+            const response = await fetch('/api/categories?_id='+_id, {
+                method:'DELETE',
+            })
+            if(response.ok){
+                resolve();
+            } 
+            else{
+                reject();
+            }
+        })
+     
+        await toast.promise(promise, {
+            loading:'Deleting...',
+            success:'Deleted',
+            error:'Error',
+        })
+        fetchCategories();
+        
+    }
   return (
     <section className="mt-8 max-w-lg mx-auto">
     <AdminTabs isAdmin={profileData}/>
@@ -72,28 +93,48 @@ const Categories = () => {
                     <input type="text" 
                         value={newCategoryName}
                         onChange={ev => setNewCategoryName(ev.target.value)}
-
                     />
                 </div>
-                <div className="pb-2">
+                <div className="flex pb-2 gap-2">
                     <button className="border border-primary" type="submit">
                         {editedCategory ? 'Update':'Create'}
                     </button>
+                    <button type="button" onClick={()=>{setEditedCategory(null); setNewCategoryName('')}}>Cancel</button>
                 </div>
             </div>
             
         </form>
         <div>
-            <h2 className="mt-8 text-sm text-gray-500 mb-2">Edit Category:</h2>
+            {categories?.length > 0 ? 
+                <h2 className="mt-8 text-sm text-gray-500 mb-2">Existing Categories:</h2>
+                :
+                <h2 className="mt-8 text-sm text-gray-500 mb-2">No Categories To Show</h2>
+            }
             {categories?.length > 0 && categories.map(c => (
-                    <button 
-                        onClick={()=>{ 
-                            setEditedCategory(c); 
-                            setNewCategoryName(c.name)
-                            }}
-                        className="bg-gray-200 rounded-xl p-2 px-4 flex gap-1 cursor-pointer mb-2">
-                        <span>{c.name}</span>
-                    </button>
+                <div className="bg-gray-100 rounded-xl p-2 px-4 flex gap-1 mb-1 items-center">
+                    <div className="grow">
+                        {c.name}
+                    </div>
+                    <div className="flex gap-1">
+                        <button
+                            onClick={()=>{ 
+                                setEditedCategory(c); 
+                                setNewCategoryName(c.name)
+                                }}
+                            type="button"
+                        >
+                            Edit
+                        </button>
+                        <button
+                            onClick={()=>handleDelete(c._id)}
+                            type="button"
+                        >
+                            Delete
+                        </button>
+
+                    </div>
+                </div>
+                    
                 
             ))}
         </div>

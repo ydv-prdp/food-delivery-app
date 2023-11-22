@@ -78,7 +78,7 @@ export default function ProfilePage(){
     }
     
     return(
-        <section className="mt-8">
+        <section className="mt-8 max-w-lg mx-auto">
            <AdminTabs isAdmin={isAdmin}/>
             <div className="max-w-md mx-auto">
                <div className="flex gap-4 items-center mt-8">

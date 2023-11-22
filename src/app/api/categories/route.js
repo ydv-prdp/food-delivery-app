@@ -28,3 +28,10 @@ export async function GET(){
     const categories = await Category.find();
     return Response.json(categories)
 }
+
+export async function DELETE(req){
+    const url = new URL(req.url);
+    const _id = url.searchParams.get('_id');
+    await Category.deleteOne({_id});
+    return Response.json(true)
+}

@@ -3,7 +3,6 @@ import { MenuItem } from "@/models/MenuItem";
 
 export async function POST(req){
     const data = await req.json();
-    console.log(data);
     if(data.name){
         const MenuItemDoc = await MenuItem.create(data);
         return Response.json(MenuItemDoc)
@@ -14,18 +13,20 @@ export async function POST(req){
    
 }
 
-// export async function PUT(req){
-//     const {data} = await req.json();
-//     let _id = await data._id;
-//     let name  = await data.name;
-//     if(_id && name){
-//        const res =  await Category.updateOne({_id}, {name});
-//        console.log(res);
-//     }
-//     return Response.json(true)
-// }
+export async function PUT(req){
+    const {_id, ...data} = await req.json();
+    await MenuItem.findByIdAndUpdate(_id, data); 
+    return Response.json(true)
+}
 
-// export async function GET(){
-//     const categories = await Category.find();
-//     return Response.json(categories)
-// }
+export async function GET(){
+    const menuItems = await MenuItem.find();
+    return Response.json(menuItems)
+}
+
+export async function DELETE(req){
+    const url = new URL(req.url);
+    const _id = url.searchParams.get('_id');
+    await MenuItem.deleteOne({_id});
+    return Response.json(true)
+}
