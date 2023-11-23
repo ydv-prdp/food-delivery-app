@@ -6,12 +6,19 @@ import { UserInfo } from "@/models/UserInfo";
 
 export async function PUT(req){
     const data = await req.json();
-    const {name, image, ...otherUserInfo} = data;
+    const {_id, name, image, ...otherUserInfo} = data;
     mongoose.connect(process.env.MONGO_URL);
-    const session = await getServerSession(authOptions);
-    const email = session.user.email;
-    await User.updateOne({email}, {name, image});
-    await UserInfo.findOneAndUpdate({email}, otherUserInfo, {upsert:true});
+    let filter = {};
+    if(_id){
+        filter = {_id};
+    }
+    else{
+        const session = await getServerSession(authOptions);
+        const email = session.user.email;
+        filter ={email}
+    }
+    await User.updateOne(filter, {name, image});
+    await UserInfo.findOneAndUpdate(filter, otherUserInfo, {upsert:true});
     return Response.json(true);
 }
 
@@ -22,10 +29,9 @@ export async function GET(){
     if(!email){
         return Response.json({});
     }
-    const user = await User.findOne({email});
-    const userInfo = await UserInfo.findOne({email});
-    return Response.json(
-        {...user, ...userInfo}
-    )
+    let  user = await User.findOne({email});
+    let  userInfo = await UserInfo.findOne({email});
+    user = {...user, ...userInfo};
+    return Response.json(user)
 
 }
